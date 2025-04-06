@@ -1,0 +1,38 @@
+import React from 'react'
+import { Grid, Typography, CardMedia, Paper, Button, Tooltip, Box } from '@mui/material';
+// import './styles/MainCoursesPageStyles.css';
+
+export default function StrengthCourse() {
+  return (
+    <Box className='main'>
+        <Box className='body' height={'100vh'} display={'flex'} justifyContent={'space-between'}>
+          <Box width={'50%'} border={'1px solid black'}>
+            
+          </Box>
+          <Grid width={'45%'} display={'flex'} flexDirection={'row'} flexWrap={'wrap'} height={'0'}>
+            {/* Карточки с изображениями и описаниями */}
+            {[...Array(30)].map((_, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                {/* <Tooltip title="Краткое описание" placement="top"> */}
+                  <Button variant='contained' borderRadius={30}>
+                    {/* <CardMedia
+                      component="img"
+                      height="140"
+                      image={`url_to_image_${index}`}
+                      alt="description"
+                    /> */}
+                    {/* <CardContent> */}
+                      <Typography gutterBottom variant="h5" component="div">
+                        {index + 1}
+                      </Typography>
+                    
+                    {/* </CardContent> */}
+                  </Button>
+                {/* </Tooltip> */}
+              </Grid>
+              ))}
+          </Grid>
+        </Box>
+    </Box>
+  )
+}
