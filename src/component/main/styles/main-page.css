@@ -1,18 +1,11 @@
-html, body {
+/* html, body {
   margin: 0;
   padding: 0;
-  background-color: #C8E6C9;
-}
+  background: transparent
+} */
 
 /* Контейнер, который центрируется по горизонтали и имеет минимальную высоту равную высоте экрана */
-.body {
-  width: 100%;
-  height: 100%;
-  max-width: 1440px; /* Если нужно ограничить ширину */
-  min-height: 100vh; /*Минимальная высота — 100% высоты экрана*/
-  margin: 0 auto; /* Центрирование по горизонтали */
-  background-color: #ffffff;
-}
+
 
 
 /* Стили для главного изображения */

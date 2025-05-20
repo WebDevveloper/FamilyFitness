@@ -3,6 +3,7 @@ import { Grid, Typography, CardMedia, Paper, Button, Snackbar, Alert } from '@mu
 import loseWeightCourseImage from '../../main/img/lose-weight.jpg';
 import { useNavigate } from 'react-router-dom';
 import CoursesButton from '../../universal/CoursesButton';
+import { postJSON } from '../../../api';
 
 export default function LoseWeightCourse() {
     const navigate = useNavigate();
@@ -10,46 +11,38 @@ export default function LoseWeightCourse() {
         const [snackbarMessage, setSnackbarMessage] = useState('');
         const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // success, error
     
-        const handleCourseSelect = async () => {
-            try {
-                const token = localStorage.getItem('accessToken');
-                if (!token) {
-                    setSnackbarMessage('Вы должны войти в систему для выбора курса.');
-                    setSnackbarSeverity('error');
-                    setSnackbarOpen(true);
-                    return;
-                }
-    
-                const response = await fetch('http://localhost:5000/api/lose-weigth-course', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`, // Передача токена
-                    },
-                    body: JSON.stringify({ purposeId: 2 }), // ID курса
-                });
-    
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Ошибка выбора курса.');
-                }
-    
-                const data = await response.json();
-                setSnackbarMessage('Курс успешно выбран!');
-                setSnackbarSeverity('success');
-                setSnackbarOpen(true);
-    
-                console.log('Ответ сервера:', data); // Для отладки
-
-                // После успешного выбора курса переходим на страницу выбора дня
-                navigate('/lose-weight-training/days');
-            } catch (error) {
-                console.error('Ошибка выбора курса:', error.message);
-                setSnackbarMessage(error.message);
+    const handleCourseSelect = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                setSnackbarMessage('Вы должны войти в систему для выбора курса.');
                 setSnackbarSeverity('error');
                 setSnackbarOpen(true);
+                return;
             }
-        };
+
+            await postJSON('/api/courses/start', { purposeId: 2 });
+
+            // if (!response.ok) {
+            //     const errorData = await response.json();
+            //     throw new Error(errorData.message || 'Ошибка выбора курса.');
+            // }
+
+            // const data = await response.json();
+            setSnackbarMessage('Курс успешно выбран!');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+
+            // console.log('Ответ сервера:', data); // Для отладки
+            // После успешного выбора курса переходим на страницу выбора дня
+            navigate('/lose-weight-training/days');
+        } catch (error) {
+            console.error('Ошибка выбора курса:', error.message);
+            setSnackbarMessage(error.message);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        }
+    };
   return (
         <>
             <CoursesButton  />

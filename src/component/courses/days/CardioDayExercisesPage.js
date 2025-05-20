@@ -1,190 +1,69 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getJSON, postJSON } from '../../../api';
 import {
-  Grid,
-  Typography,
-  Paper,
-  Button,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Box
+  Grid, Typography, Paper, Button,
+  Snackbar, Alert, CircularProgress, Box
 } from '@mui/material';
 
 export default function CardioDayExercisesPage() {
-  const { day } = useParams(); // номер дня из URL
+  const { day } = useParams();
   const navigate = useNavigate();
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
-  // Массив-счетчик для каждого упражнения (0/5)
-  const [counters, setCounters] = useState([]);
-
-  // Получаем упражнения выбранного дня
-  const fetchExercises = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setSnackbarMessage('Пользователь не авторизован.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        setLoading(false);
-        return;
-      }
-      // Для силового курса предполагаем courseId = 1
-      const response = await fetch(`http://localhost:5000/api/exercises/3/${day}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Ошибка получения упражнений.');
-      }
-      const data = await response.json();
-      setExercises(data.exercises);
-      // Инициализируем счетчики для каждого упражнения (0 из 5)
-      setCounters(new Array(data.exercises.length).fill(0));
-    } catch (error) {
-      setSnackbarMessage(error.message);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [snack, setSnack] = useState({ open:false, msg:'', sev:'success' });
 
   useEffect(() => {
-    fetchExercises();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (async () => {
+      try {
+        // единообразный вызов через getJSON
+        const data = await getJSON(`/api/exercises/3/${day}`);
+        // Если сервер отдаёт сразу массив: setExercises(data);
+        setExercises(data.exercises || data);
+      } catch (e) {
+        setSnack({ open:true, msg:e.message, sev:'error' });
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [day]);
 
-  // Функция для завершения дня курса
   const completeDay = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setSnackbarMessage('Пользователь не авторизован.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        return;
-      }
-      const response = await fetch(`http://localhost:5000/api/journal/3/${day}/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Ошибка завершения дня.');
-      }
-      const data = await response.json();
-      setSnackbarMessage(data.message);
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-      // Переход обратно на страницу выбора дня после успешного завершения
-      setTimeout(() => {
-        navigate('/cardio-training/days');
-      }, 2000);
-    } catch (error) {
-      setSnackbarMessage(error.message);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+      const res = await postJSON(`/api/journal/3/${day}/complete`, {});
+      setSnack({ open:true, msg: res.message, sev:'success' });
+      setTimeout(() => navigate('/cardio-training/days'), 1000);
+    } catch (e) {
+      setSnack({ open:true, msg:e.message, sev:'error' });
     }
   };
 
-  // Функция для увеличения счётчика подходов для конкретного упражнения
-  const incrementCounter = (index) => {
-    setCounters((prevCounters) => {
-      const newCounters = [...prevCounters];
-      if (newCounters[index] < 5) {
-        newCounters[index] += 1;
-      }
-      return newCounters;
-    });
-  };
+  if (loading) return <CircularProgress />;
 
   return (
-    <Paper sx={{ padding: 3, marginTop: 2 }}>
-      <Typography variant="h5" textAlign="center" gutterBottom>
-        Упражнения на День {day}
-      </Typography>
-      {loading ? (
-        <Grid container justifyContent="center">
-          <CircularProgress />
-        </Grid>
-      ) : (
-        <Grid container spacing={3}>
-          {exercises.length === 0 ? (
-            <Typography variant="body1">Упражнения не найдены.</Typography>
-          ) : (
-            exercises.map((exercise, index) => (
-              <Grid item xs={12} key={exercise.id}>
-                <Paper
-                  elevation={4}
-                  sx={{
-                    padding: 2,
-                    minHeight: 150, // увеличенная высота карточки
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Box>
-                    <Typography variant="h5" sx={{ mb: 1 }}>
-                      {exercise.name}
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                      Описание:
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      {exercise.about}
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                      Как выполнять:
-                    </Typography>
-                    <Typography variant="body1">
-                      {exercise.how_to_do}
-                    </Typography> 
-                  </Box>
-                  <Box mt={2} display="flex" alignItems="center" justifyContent="space-between">
-                    <Button
-                      variant="outlined"
-                      onClick={() => incrementCounter(index)}
-                      disabled={counters[index] >= 5}
-                    >
-                      Подходы: {counters[index]}/5
-                    </Button>
-                  </Box>
-                </Paper>
-              </Grid>
-            ))
-          )}
-        </Grid>
-      )}
-
-      <Grid container justifyContent="center" sx={{ marginTop: 3 }}>
-        <Button variant="contained" onClick={completeDay}>
-          Завершить день
-        </Button>
+    <>
+      <Typography variant="h5" gutterBottom>Упражнения: День {day}</Typography>
+      <Grid container spacing={2}>
+        {exercises.map(ex => (
+          <Grid item xs={12} key={ex.id}>
+            <Paper sx={{ p:2 }}>
+              <Typography variant="h6">{ex.name}</Typography>
+              <Typography paragraph>{ex.about}</Typography>
+              <Typography variant="body2"><b>Как выполнять:</b> {ex.how_to_do}</Typography>
+            </Paper>
+          </Grid>
+        ))}
       </Grid>
-
+      <Button variant="contained" sx={{ mt:2 }} onClick={completeDay}>
+        Завершить день
+      </Button>
       <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
+        open={snack.open}
+        autoHideDuration={3000}
+        onClose={()=>setSnack(s=>({...s,open:false}))}
       >
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
-          {snackbarMessage}
-        </Alert>
+        <Alert severity={snack.sev}>{snack.msg}</Alert>
       </Snackbar>
-    </Paper>
+    </>
   );
 }

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 import {jwtDecode} from "jwt-decode";
 
+import { getJSON } from '../../api';
+
 export default function MainJournalPage() {
     const [courses, setCourses] = useState([]); // Хранение списка курсов
     const [selectedCourse, setSelectedCourse] = useState(null); // Выбранный курс
@@ -27,19 +29,7 @@ export default function MainJournalPage() {
                 const decoded = jwtDecode(token);
                 setUserName(decoded.name); // Устанавливаем имя в state
                 
-                const response = await fetch('http://localhost:5000/api/courses', {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-    
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Ошибка загрузки курсов.');
-                }
-    
-                const data = await response.json();
+                const data = await getJSON('/courses/progress');
                 setCourses(data); // Сохраняем полученные курсы
             } catch (error) {
                 console.error('Ошибка при загрузке курсов:', error.message);

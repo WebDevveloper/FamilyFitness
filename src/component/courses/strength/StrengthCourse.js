@@ -1,9 +1,9 @@
-// StrengthCourse.js
 import React, { useState } from 'react';
 import { Grid, Typography, CardMedia, Paper, Button, Snackbar, Alert } from '@mui/material';
 import strengthCourseImage from '../../main/img/strength-course.jpg';
 import { useNavigate } from 'react-router-dom';
 import CoursesButton from '../../universal/CoursesButton';
+import { postJSON } from '../../../api';
 
 export default function StrengthCourse() {
   const navigate = useNavigate();
@@ -21,26 +21,18 @@ export default function StrengthCourse() {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/strength-course', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Передача токена
-        },
-        body: JSON.stringify({ purposeId: 1 }), // ID курса для силовой тренировки
-      });
+      await postJSON('/api/courses/start', { purposeId: 1 });
+      // if (!response.ok) {
+      //   const errorData = await response.json();
+      //   throw new Error(errorData.message || 'Ошибка выбора курса.');
+      // }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Ошибка выбора курса.');
-      }
-
-      const data = await response.json();
+      // const data = await response.json();
       setSnackbarMessage('Курс успешно выбран!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
 
-      console.log('Ответ сервера:', data); // Для отладки
+      // console.log('Ответ сервера:', data); // Для отладки
       
       // После успешного выбора курса переходим на страницу выбора дня
       navigate('/strength-training/days');

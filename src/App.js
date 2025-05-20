@@ -1,48 +1,68 @@
-import CardioCourse from "./component/courses/cardio/CardioCourse";
-import LoseWeightCourse from "./component/courses/lose_weight/LoseWeightCourse";
-import MainCoursesPage from "./component/courses/main_page/MainCoursesPage";
-import StrengthCourse from "./component/courses/strength/StrengthCourse";
-import MainPage from "./component/main/MainPage";
-import MainJournalPage from "./component/journal/MainJournalPage";
-
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ResponsiveAppBar from "./component/universal/AppBar";
-import About from "./component/about/About";
-import SignUpForm from "./component/profile/SignUpForm";
-import RegistrationForm from "./component/profile/RegistrationForm";
-import DaySelectionPage from "./component/courses/days/DaySelectionPage";
-import DayExercisesPage from "./component/courses/days/DayExercisesPage";
-import LoseWeightDaySelectionPage from "./component/courses/days/LoseWeightDaySelectionPage";
-import LoseWeightDayExercisesPage from "./component/courses/days/LoseWeightDayExercisesPage";
-import CardioDaySelectionPage from "./component/courses/days/CardioDaySelectionPage";
-import CardioDayExercisesPage from "./component/courses/days/CardioDayExercisesPage";
-import ProfilePage from "./component/profile/ProfilePage";
+import { Container } from '@mui/material';
 
+import ResponsiveAppBar from './component/universal/AppBar';
+import MainPage from './component/main/MainPage';
+import About from './component/about/About';
 
+import MainCoursesPage from './component/courses/main_page/MainCoursesPage';
+import StrengthCourse from './component/courses/strength/StrengthCourse';
+import LoseWeightCourse from './component/courses/lose_weight/LoseWeightCourse';
+import CardioCourse from './component/courses/cardio/CardioCourse';
+
+import DaySelectionPage from './component/courses/days/DaySelectionPage';
+import DayExercisesPage from './component/courses/days/DayExercisesPage';
+import LoseWeightDaySelectionPage from './component/courses/days/LoseWeightDaySelectionPage';
+import LoseWeightDayExercisesPage from './component/courses/days/LoseWeightDayExercisesPage';
+import CardioDaySelectionPage from './component/courses/days/CardioDaySelectionPage';
+import CardioDayExercisesPage from './component/courses/days/CardioDayExercisesPage';
+
+import MainJournalPage from './component/journal/MainJournalPage';
+
+import ProfilePage from './component/profile/ProfilePage';
+import SignUpForm from './component/profile/SignUpForm';
+import RegistrationForm from './component/profile/RegistrationForm';
+
+import FamilyDashboard from './component/family/FamilyDashboard';
+import CalendarPage from './component/calendar/CalendarPage';
+import ProgressPage from './component/progress/ProgressPage';
 
 function App() {
   return (
-    <Router>
-      <ResponsiveAppBar />
-      <div className="body">
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Router>
+        <ResponsiveAppBar />
+
         <Routes>
-          {/* Главная страница */}
+          {/* Главная */}
           <Route path="/" element={<MainPage />} />
-          
-          {/* Страницы из меню */}
+
+          {/* О проекте */}
           <Route path="/about" element={<About />} />
+
+          {/* Семейный дашборд */}
+          <Route path="/family" element={<FamilyDashboard />} />
+
+          {/* Программы */}
           <Route path="/programs" element={<MainCoursesPage />} />
+
+          {/* Журнал */}
           <Route path="/journal" element={<MainJournalPage />} />
+
+          {/* Календарь */}
+          <Route path="/calendar" element={<CalendarPage />} />
+
+          {/* Прогресс */}
+          <Route path="/progress" element={<ProgressPage />} />
 
           {/* Курсы */}
           <Route path="/strength-training" element={<StrengthCourse />} />
           <Route path="/lose-weight-training" element={<LoseWeightCourse />} />
           <Route path="/cardio-training" element={<CardioCourse />} />
 
-          {/* Упражнения */}
-          {/* Страница выбора дня курса */}
+          {/* Выбор дня для каждого курса */}
           <Route path="/strength-training/days" element={<DaySelectionPage />} />
-          {/* Страница упражнений выбранного дня (параметр day) */}
           <Route path="/strength-training/days/:day" element={<DayExercisesPage />} />
 
           <Route path="/lose-weight-training/days" element={<LoseWeightDaySelectionPage />} />
@@ -54,15 +74,15 @@ function App() {
           {/* Профиль */}
           <Route path="/profile" element={<ProfilePage />} />
 
-          {/* Форма регистрации/входа */}
+          {/* Аутентификация */}
           <Route path="/signup" element={<SignUpForm />} />
           <Route path="/registration" element={<RegistrationForm />} />
 
           {/* 404 */}
           <Route path="*" element={<h1>404: Page Not Found</h1>} />
         </Routes>
-      </div>
-  </Router>
+      </Router>
+    </Container>
   );
 }
 

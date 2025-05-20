@@ -21,10 +21,14 @@ import logo from './img/blue-and-green-letter-F.jpg';
 const pages = [
   { label: 'О нас', path: '/about' },
   { label: 'Программы', path: '/programs' },
+  { label: 'Семья', path: '/family' },
+  { label: 'Календарь', path: '/calendar' },
+  { label: 'Статистика', path: '/progress' }
 ];
 
 const settings = [
   { label: 'Профиль', path: '/profile' },
+  { label: 'Семья', path: '/family' },
   { label: 'Войти', path: '/signup' },
   { label: 'Выйти', action: 'logout' },
 ];
