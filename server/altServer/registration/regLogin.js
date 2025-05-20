@@ -1,5 +1,7 @@
 const db = require('../server/api');
-const crypto = require('crypto');
+// const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+
 const tokenService = require('../token/tokenService');
 
 // Регистрация пользователя
