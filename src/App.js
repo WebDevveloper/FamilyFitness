@@ -62,8 +62,18 @@ function App() {
           <Route path="/cardio-training" element={<CardioCourse />} />
 
           {/* Выбор дня для каждого курса */}
-          <Route path="/strength-training/days" element={<DaySelectionPage />} />
-          <Route path="/strength-training/days/:day" element={<DayExercisesPage />} />
+          
+          {/* Сила */}
+          <Route path="/strength-training/days" element={<DaySelectionPage purposeId={1}/>} />
+          <Route path="/strength-training/days/:day" element={<DayExercisesPage purposeId={1}/>} />
+
+          {/* Похудение */}
+          {/* <Route path="/lose-weight-training/days" element={<DaySelectionPage purposeId={2}/>} />
+          <Route path="/lose-weight-training/days/:day" element={<DayExercisesPage purposeId={2}/>} /> */}
+
+          {/* Кардио */}
+          {/* <Route path="/cardio-training/days" element={<DaySelectionPage purposeId={3}/>} />
+          <Route path="/cardio-training/days/:day" element={<DayExercisesPage purposeId={3}/>} /> */}
 
           <Route path="/lose-weight-training/days" element={<LoseWeightDaySelectionPage />} />
           <Route path="/lose-weight-training/days/:day" element={<LoseWeightDayExercisesPage />} />

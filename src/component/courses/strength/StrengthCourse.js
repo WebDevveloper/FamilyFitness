@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Grid, Typography, CardMedia, Paper, Button, Snackbar, Alert } from '@mui/material';
+import {
+  Grid,
+  Typography,
+  CardMedia,
+  Paper,
+  Button,
+  Snackbar,
+  Alert,
+  Box
+} from '@mui/material';
 import strengthCourseImage from '../../main/img/strength-course.jpg';
 import { useNavigate } from 'react-router-dom';
 import CoursesButton from '../../universal/CoursesButton';
@@ -7,87 +16,46 @@ import { postJSON } from '../../../api';
 
 export default function StrengthCourse() {
   const navigate = useNavigate();
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // success, error
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const handleCourseSelect = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setSnackbarMessage('Вы должны войти в систему для выбора курса.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        return;
-      }
-
       await postJSON('/api/courses/start', { purposeId: 1 });
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.message || 'Ошибка выбора курса.');
-      // }
-
-      // const data = await response.json();
-      setSnackbarMessage('Курс успешно выбран!');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-
-      // console.log('Ответ сервера:', data); // Для отладки
-      
-      // После успешного выбора курса переходим на страницу выбора дня
+      setSnackbar({ open: true, message: 'Курс “Сила” запущен!', severity: 'success' });
       navigate('/strength-training/days');
-    } catch (error) {
-      console.error('Ошибка выбора курса:', error.message);
-      setSnackbarMessage(error.message);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+    } catch (e) {
+      setSnackbar({ open: true, message: e.message, severity: 'error' });
     }
   };
 
   return (
     <>
-      <CoursesButton  />
-      <Paper elevation={3} sx={{ padding: 2, height: 'auto'}}>
-        <Typography variant="h5" component="div" textAlign={'center'}>
-          Силовая тренировка
-        </Typography>
-        <Grid container spacing={2} alignItems="center">
+      <CoursesButton />
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h5" textAlign="center">Силовая тренировка</Typography>
+        <Grid container spacing={2} alignItems="center" sx={{ mt: 1 }}>
           <Grid item xs={12} sm={6}>
-            <CardMedia
-              component="img"
-              image={strengthCourseImage}
-              alt="Силовая тренировка"
-              sx={{ width: '100%', height: 'auto' }}
-            />
+            <CardMedia component="img" image={strengthCourseImage} alt="Сила" />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="text.secondary">
-              Силовая тренировка представляет собой высокоинтенсивную нагрузку 
-              на мышцы с целью увеличения физической силы.
+            <Typography>
+              Интенсивная силовая нагрузка для наращивания мышечной массы и выносливости.
             </Typography>
           </Grid>
         </Grid>
-        <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
-          <Grid item>
-            <Button variant="contained" onClick={handleCourseSelect}>
-              Приступить
-            </Button>
-          </Grid>
-        </Grid>
+        <Box textAlign="center" sx={{ mt: 2 }}>
+          <Button variant="contained" onClick={handleCourseSelect}>
+            Приступить
+          </Button>
+        </Box>
       </Paper>
 
       <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
       >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
     </>
   );

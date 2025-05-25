@@ -1,69 +1,74 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Grid, Typography, Paper, Button, Snackbar, Alert, CircularProgress, Box } from '@mui/material';
 import { getJSON, postJSON } from '../../../api';
-import {
-  Grid, Typography, Paper, Button,
-  Snackbar, Alert, CircularProgress, Box
-} from '@mui/material';
 
 export default function CardioDayExercisesPage() {
   const { day } = useParams();
   const navigate = useNavigate();
+  const purposeId = 3;
   const [exercises, setExercises] = useState([]);
+  const [counters, setCounters] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [snack, setSnack] = useState({ open:false, msg:'', sev:'success' });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
-    (async () => {
+    async function fetchExercises() {
       try {
-        // единообразный вызов через getJSON
-        const data = await getJSON(`/api/exercises/3/${day}`);
-        // Если сервер отдаёт сразу массив: setExercises(data);
-        setExercises(data.exercises || data);
+        const data = await getJSON(`/api/courses/exercises/${purposeId}`);
+        const list = data.exercises.filter(e => e.day === Number(day));
+        setExercises(list);
+        setCounters(new Array(list.length).fill(0));
       } catch (e) {
-        setSnack({ open:true, msg:e.message, sev:'error' });
+        setSnackbar({ open: true, message: e.message, severity: 'error' });
       } finally {
         setLoading(false);
       }
-    })();
+    }
+    fetchExercises();
   }, [day]);
 
   const completeDay = async () => {
     try {
-      const res = await postJSON(`/api/journal/3/${day}/complete`, {});
-      setSnack({ open:true, msg: res.message, sev:'success' });
-      setTimeout(() => navigate('/cardio-training/days'), 1000);
+      const prog = await getJSON('/api/courses/progress');
+      const rec = prog.progress.find(r => r.purposeId === purposeId);
+      await postJSON('/api/courses/complete', { journalId: rec.journalId });
+      setSnackbar({ open: true, message: 'День завершён', severity: 'success' });
+      setTimeout(() => navigate('/cardio-training/days'), 1500);
     } catch (e) {
-      setSnack({ open:true, msg:e.message, sev:'error' });
+      setSnackbar({ open: true, message: e.message, severity: 'error' });
     }
+  };
+
+  const increment = idx => {
+    setCounters(c => c.map((v, i) => i === idx && v < 5 ? v + 1 : v));
   };
 
   if (loading) return <CircularProgress />;
 
   return (
-    <>
-      <Typography variant="h5" gutterBottom>Упражнения: День {day}</Typography>
-      <Grid container spacing={2}>
-        {exercises.map(ex => (
+    <Paper sx={{ p: 3, mt: 2 }}>
+      <Typography variant="h5" textAlign="center">Упражнения на день {day}</Typography>
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+        {exercises.map((ex, i) => (
           <Grid item xs={12} key={ex.id}>
-            <Paper sx={{ p:2 }}>
+            <Paper sx={{ p: 2 }}>
               <Typography variant="h6">{ex.name}</Typography>
-              <Typography paragraph>{ex.about}</Typography>
-              <Typography variant="body2"><b>Как выполнять:</b> {ex.how_to_do}</Typography>
+              <Typography>{ex.about}</Typography>
+              <Typography>{ex.how_to_do}</Typography>
+              <Button onClick={() => increment(i)} disabled={counters[i] >= 5} sx={{ mt: 1 }}>
+                Подходы: {counters[i]}/5
+              </Button>
             </Paper>
           </Grid>
         ))}
       </Grid>
-      <Button variant="contained" sx={{ mt:2 }} onClick={completeDay}>
+      <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={completeDay}>
         Завершить день
       </Button>
-      <Snackbar
-        open={snack.open}
-        autoHideDuration={3000}
-        onClose={()=>setSnack(s=>({...s,open:false}))}
-      >
-        <Alert severity={snack.sev}>{snack.msg}</Alert>
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({...s, open:false}))}>
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
-    </>
+    </Paper>
   );
 }

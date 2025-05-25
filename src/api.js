@@ -1,25 +1,27 @@
 import { getAccessToken } from './component/profile/tokenStorage';
 
-const API_BASE = 'http://localhost:5000';
-
 function authHeaders() {
   const token = getAccessToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// GET JSON
 export async function getJSON(path) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...authHeaders() }
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    credentials: 'include',
   });
   if (!res.ok) throw new Error(`Ошибка ${res.status}`);
   return res.json();
 }
 
+// POST JSON
 export async function postJSON(path, body) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify(body)
+    credentials: 'include',
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);

@@ -27,6 +27,12 @@ router.post(
   ctl.startCourse      // ← нужно дописать в контроллер
 );
 
+// POST /api/courses/reset
+// перезапуск курса.
+router.post ('/reset',
+  permit('parent','child'), 
+  ctl.resetCourse);
+
 /**
  * POST /api/courses/complete
  *   — отметить день выполненным

@@ -1,46 +1,53 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getJSON, postJSON } from '../../../api';
 
-export default function CardioDaySelectionPage() {
+export default function LoseWeightDaySelectionPage() {
   const navigate = useNavigate();
-  const purposeId = 2;
   const totalDays = 30;
+  const purposeId = 2;
   const [currentDay, setCurrentDay] = useState(1);
   const [isOver, setIsOver]         = useState(false);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState('');
 
   useEffect(() => {
-    (async () => {
+    async function fetchProgress() {
       try {
-        const journal = await getJSON(`/api/journal/${purposeId}`);
-        setCurrentDay(journal.current_day);
-        setIsOver(Boolean(journal.is_over));
-      } catch (err) {
-        setError(err.message);
+        const { progress } = await getJSON('/api/courses/progress');
+        const rec = progress.find(r => r.purposeId === purposeId);
+        if (!rec) throw new Error('Прогресс не найден');
+        setCurrentDay(rec.currentDay);
+        setIsOver(Boolean(rec.isOver));
+      } catch (e) {
+        setError(e.message);
       } finally {
         setLoading(false);
       }
-    })();
+    }
+    fetchProgress();
   }, []);
 
-  const handleDaySelect = day => {
+  const handleDaySelect = (day) => {
     if (!isOver && day <= currentDay) {
       navigate(`/lose-weight-training/days/${day}`);
     }
   };
 
-  const handleReset = async () => {
+  const handleResetCourse = async () => {
     try {
-      await postJSON(`/api/journal/${purposeId}/reset`, {});
-      // повторно подгружаем
-      const journal = await getJSON(`/api/journal/${purposeId}`);
-      setCurrentDay(journal.current_day);
-      setIsOver(false);
-    } catch (err) {
-      setError(err.message);
+      await postJSON('/api/courses/reset', { purposeId });
+      setLoading(true);
+      setError('');
+      const { progress } = await getJSON('/api/courses/progress');
+      const rec = progress.find(r => r.purposeId === purposeId);
+      setCurrentDay(rec.currentDay);
+      setIsOver(Boolean(rec.isOver));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,24 +55,29 @@ export default function CardioDaySelectionPage() {
   if (error)   return <Typography color="error">{error}</Typography>;
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h5" align="center" gutterBottom>
-        Выберите день (текущий: {currentDay})
+    <Paper sx={{ p: 3, mt: 2 }}>
+      <Typography variant="h5" textAlign="center" gutterBottom>
+        Курс похудения — выберите день
       </Typography>
       <Box
         sx={{
           display: 'grid',
-          gap: 1,
-          gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))',
+          gap: 2,
+          gridTemplateColumns: 'repeat(auto-fill, 80px)',
+          justifyContent: 'center'
         }}
       >
         {Array.from({ length: totalDays }, (_, i) => {
           const day = i + 1;
           const disabled = isOver || day > currentDay;
+          let color = 'inherit';
+          if (day < currentDay) color = 'success';
+          else if (day === currentDay) color = 'primary';
           return (
             <Button
               key={day}
-              variant={day < currentDay ? 'contained' : 'outlined'}
+              variant="contained"
+              color={color}
               disabled={disabled}
               onClick={() => handleDaySelect(day)}
             >
@@ -74,9 +86,9 @@ export default function CardioDaySelectionPage() {
           );
         })}
       </Box>
-      <Box textAlign="center" sx={{ mt: 2 }}>
-        <Button color="secondary" onClick={handleReset}>
-          Сбросить курс
+      <Box sx={{ mt: 2, textAlign: 'center' }}>
+        <Button onClick={handleResetCourse}>
+          {isOver ? 'Повторить курс' : 'Начать сначала'}
         </Button>
       </Box>
     </Paper>
