@@ -27,6 +27,7 @@ import RegistrationForm from './component/profile/RegistrationForm';
 import FamilyDashboard from './component/family/FamilyDashboard';
 import CalendarPage from './component/calendar/CalendarPage';
 import ProgressPage from './component/progress/ProgressPage';
+import ChildProgressPage from './component/family/ChildProgressPage';
 
 function App() {
   return (
@@ -43,6 +44,10 @@ function App() {
 
           {/* Семейный дашборд */}
           <Route path="/family" element={<FamilyDashboard />} />
+
+          {/* Подробная информация о ребенке */}
+          <Route path="/family/:childId" element={<ChildProgressPage  />}
+/>
 
           {/* Программы */}
           <Route path="/programs" element={<MainCoursesPage />} />

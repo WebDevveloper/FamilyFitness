@@ -1,84 +1,88 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import { getJSON, postJSON } from '../../../api';
+import { useNavigate } from 'react-router-dom';
 
 export default function CardioDaySelectionPage() {
   const navigate = useNavigate();
   const totalDays = 30;
-  const courseId = 3;
-  const [currentDay, setCurrentDay] = useState(1);
+  const purposeId = 3;
+  const [currentDay, setCurrentDay] = useState(0);
   const [isOver, setIsOver] = useState(false);
+  const [journalId, setJournalId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
+  // Забираем прогресс и ID активной попытки
   useEffect(() => {
-    async function fetchProgress() {
-      try {
-        const data = await getJSON('/api/courses/progress');
-        const rec = data.progress.find(r => r.purposeId === courseId);
-        if (!rec) throw new Error('Прогресс не найден');
+    (async () => {
+      const { progress } = await getJSON('/api/courses/progress');
+      const rec = progress.find(r => r.purposeId === purposeId);
+      if (rec) {
         setCurrentDay(rec.currentDay);
-        setIsOver(Boolean(rec.isOver));
-      } catch (e) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
+        setIsOver(rec.isOver === 1);
+        setJournalId(rec.journalId);
       }
-    }
-    fetchProgress();
+      setLoading(false);
+    })();
   }, []);
 
-  const handleDaySelect = (day) => {
-    if (!isOver && day <= currentDay) {
-      navigate(`/cardio-training/days/${day}`);
+  // выбор дня
+  const handleDay = day => {
+    if (day <= currentDay) {
+      navigate(`/cardio-training/days/${day}`, { state: { journalId } });
     }
   };
 
-  const handleResetCourse = async () => {
-    try {
-      await postJSON(`/api/courses/reset`, { purposeId: courseId });
-      // после сброса просто перезагружаем прогресс
-      setLoading(true);
-      setError('');
-      // повторный fetchProgress()
-      const data = await getJSON('/api/courses/progress');
-      const rec = data.progress.find(r => r.purposeId === courseId);
-      setCurrentDay(rec.currentDay);
-      setIsOver(Boolean(rec.isOver));
-    } catch (e) {
-      setError(e.message);
-    }
+  // кнопка «Начать сначала» доступна только если курс полностью пройден
+  const handleReset = async () => {
+    if (!isOver) return;
+    await postJSON('/api/courses/reset', { purposeId });
+    window.location.reload();
   };
 
   if (loading) return <Typography>Загрузка...</Typography>;
-  if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Paper sx={{ p: 3, mt: 2 }}>
-      <Typography variant="h5" textAlign="center" gutterBottom>Выберите день курса</Typography>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fill, 80px)', justifyContent: 'center' }}>
+    <Paper sx={{ p:3, mt:2 }}>
+      <Typography variant="h5" align="center" gutterBottom>
+        Выберите день курса
+      </Typography>
+      <Box
+        sx={{
+          display:'grid',
+          gridTemplateColumns:'repeat(auto-fill,80px)',
+          gap:2,
+          justifyContent:'center',
+        }}
+      >
         {Array.from({ length: totalDays }, (_, i) => {
           const day = i + 1;
-          const disabled = isOver || day > currentDay;
+          const disabled = day > currentDay;  // все дни > currentDay недоступны
           let color = 'inherit';
           if (day < currentDay) color = 'success';
-          else if (day === currentDay) color = 'primary';
+          if (day === currentDay) color = 'primary';
           return (
             <Button
               key={day}
               variant="contained"
               color={color}
               disabled={disabled}
-              onClick={() => handleDaySelect(day)}
+              onClick={() => handleDay(day)}
             >
               {day}
             </Button>
           );
         })}
       </Box>
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Button onClick={handleResetCourse}>Начать сначала</Button>
+      <Box textAlign="center" sx={{ mt:2 }}>
+        <Button
+          variant="outlined"
+          color="error"
+          disabled={!isOver}
+          onClick={handleReset}
+        >
+          Начать сначала
+        </Button>
       </Box>
     </Paper>
   );

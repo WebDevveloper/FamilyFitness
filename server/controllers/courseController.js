@@ -13,7 +13,16 @@ async function listPurposes(req, res, next) {
 /** GET  /api/courses/exercises/:purposeId */
 async function listExercises(req, res, next) {
   try {
-    const exercises = await courseService.listExercisesByPurpose(req.params.purposeId);
+    // 1) Явно разбираем параметр из URL
+    const purposeId = parseInt(req.params.purposeId, 10);
+    if (isNaN(purposeId)) {
+      const err = new Error('Неправильный параметр purposeId');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 2) Передаём чистое число в сервис
+    const exercises = await courseService.listExercisesByPurpose(purposeId);
     res.json({ exercises });
   } catch (err) {
     next(err);
@@ -31,24 +40,9 @@ async function startCourse(req, res, next) {
       throw e;
     }
     const record = await courseService.startCourse(userId, purposeId);
-    res.status(201).json(record);
-  } catch (err) {
-    next(err);
-  }
-}
-
-/** POST /api/courses/reset */
-async function resetCourse(req, res, next) {
-  try {
-    const userId     = req.user.id;
-    const { purposeId } = req.body;
-    if (!purposeId) {
-      const e = new Error('purposeId обязателен');
-      e.statusCode = 400;
-      throw e;
-    }
-    await courseService.resetCourse(userId, purposeId);
-    res.json({ message: 'Курс сброшен' });
+    // Если новая попытка создана — 201, иначе 200
+    const status = record.currentDay === 1 ? 201 : 200;
+    res.status(status).json(record);
   } catch (err) {
     next(err);
   }
@@ -57,7 +51,7 @@ async function resetCourse(req, res, next) {
 /** POST /api/courses/complete */
 async function completeDay(req, res, next) {
   try {
-    const userId      = req.user.id;
+    const userId    = req.user.id;
     const { journalId } = req.body;
     if (!journalId) {
       const e = new Error('journalId обязателен');
@@ -86,7 +80,6 @@ module.exports = {
   listPurposes,
   listExercises,
   startCourse,
-  resetCourse,
   completeDay,
   getProgress
 };

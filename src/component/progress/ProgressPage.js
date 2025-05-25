@@ -1,72 +1,98 @@
 // src/component/progress/ProgressPage.js
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Box, Typography, CircularProgress, Alert } from '@mui/material';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend
+} from 'recharts';
 import { getJSON } from '../../api';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProgressPage() {
-  const [members, setMembers] = useState([]);
-  const [selected, setSelected] = useState(null);
   const [data, setData]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
+  const navigate              = useNavigate();
 
-  // Загрузим членов семьи
   useEffect(() => {
-    getJSON('/family')
-      .then(setMembers)
-      .catch(console.error);
-  }, []);
-
-  // При смене пользователя — загружаем логи
-  useEffect(() => {
-    if (!selected) return;
-    getJSON(`/users/${selected}/exercise-logs`)
-      .then(logs => {
-        // Группируем по дате и считаем общее число подходов
-        const grouped = logs.reduce((acc, { performed_at, reps }) => {
-          const date = performed_at.split('T')[0];
-          acc[date] = (acc[date] || 0) + (reps || 1);
-          return acc;
-        }, {});
-        // Формируем массив для графика
-        const chartData = Object.entries(grouped).map(([date, total]) => ({ date, total }));
+    (async () => {
+      try {
+        // Получаем массив попыток из журнала
+        const { progress } = await getJSON('/api/courses/progress');
+        // Преобразуем в формат для Recharts
+        const chartData = progress.map((item, idx) => ({
+          // Показываем имя курса + дату старта попытки
+          name: `${item.name} (${item.dateStarted})`,
+          // Число реально пройденных дней (текущий день минус 1, если сегодня ещё не отмечен)
+          completed: Math.min(item.currentDay, item.totalDays),
+          // Всего дней в курсе
+          total: item.totalDays
+        }));
         setData(chartData);
-      })
-      .catch(console.error);
-  }, [selected]);
+      } catch (e) {
+        if (e.statusCode === 401) {
+          // незарегистрированный → редиректим на логин
+          navigate('/login');
+        } else {
+          setError(e.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <Box sx={{ textAlign: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography>Нет данных для отображения.</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2, bgcolor: 'background.default', minHeight: '100vh' }}>
       <Typography variant="h4" gutterBottom>
         Статистика прогресса
       </Typography>
 
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel id="member-select-label">Член семьи</InputLabel>
-        <Select
-          labelId="member-select-label"
-          value={selected || ''}
-          label="Член семьи"
-          onChange={e => setSelected(e.target.value)}
-        >
-          {members.map(m => (
-            <MenuItem key={m.id} value={m.id}>
-              {m.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {data.length > 0 && (
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={data}>
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="total" name="Подходы" fill="#1976d2" />
-          </BarChart>
-        </ResponsiveContainer>
-      )}
+      <ResponsiveContainer width="100%" height={400}>
+        <BarChart data={data}>
+          <XAxis dataKey="name" angle={-30} textAnchor="end" height={60} />
+          <YAxis />
+          <Tooltip
+            formatter={(value, name) =>
+              name === 'completed'
+                ? [`${value} дней`, 'Пройдено']
+                : [`${value} дней`, 'Всего']
+            }
+          />
+          <Legend verticalAlign="top" />
+          <Bar dataKey="completed" name="Пройдено" fill="#1976d2" />
+          <Bar dataKey="total"     name="Всего дней" fill="#90caf9" />
+        </BarChart>
+      </ResponsiveContainer>
     </Box>
   );
 }

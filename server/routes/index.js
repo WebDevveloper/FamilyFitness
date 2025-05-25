@@ -6,5 +6,6 @@ router.use('/family',  require('./familyRoutes'));
 router.use('/courses', require('./courseRoutes'));
 router.use('/journal', require('./journalRoutes'));
 router.use('/profile', require('./profileRoutes'));
+router.use('/calendar', require('./calendarRoutes'));
 
 module.exports = router;

@@ -1,24 +1,30 @@
 const { pool } = require('../config/db');
 
 /**
- * Возвращает список программ (purposes)
+ * — список программ (purposes)
  */
 async function listPurposes() {
-  const [rows] = await pool.query(
-    `SELECT
-       id,
-       name,
-       count_day    AS totalDays,
-       calories
-     FROM purpose`
-  );
+  const [rows] = await pool.query(`
+    SELECT id, name, count_day AS totalDays, calories
+      FROM purpose
+  `);
   return rows;
 }
 
 /**
- * Возвращает упражнения для конкретной программы
+ * — упражнения по программе
+ * @param {number|string} purposeId
  */
 async function listExercisesByPurpose(purposeId) {
+  // 1) Преобразуем в число, на всякий случай
+  const pid = Number(purposeId);
+  if (isNaN(pid)) {
+    const err = new Error('Неправильный параметр purposeId');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // 2) Передаём именно pid в массив параметров
   const [rows] = await pool.query(
     `SELECT
        pc.day,
@@ -30,115 +36,113 @@ async function listExercisesByPurpose(purposeId) {
      JOIN exercise e ON e.id = pc.exercise_id
      WHERE pc.purpose_id = ?
      ORDER BY pc.day, pc.id`,
-    [purposeId]
+    [pid]
   );
   return rows;
 }
 
 /**
- * Старт (или повторный старт) курса:
- * - если запись в journal нет → вставляем новую;
- * - если есть и is_over=0 → возвращаем существующую (продолжение);
- * - если есть и is_over=1 → сбрасываем под курс заново (обновляем dates и флаг).
+ * POST /courses/start
+ * Старт новой попытки, если нет активной.
  */
 async function startCourse(userId, purposeId) {
-  // ищем в журнале
-  const [[row]] = await pool.query(
-    `SELECT id, is_over
-       FROM journal
-      WHERE user_id = ? AND purpose_id = ?`,
+  // есть ли активная попытка?
+  const [[active]] = await pool.query(
+    `SELECT id FROM journal WHERE user_id=? AND purpose_id=? AND is_over=0`,
     [userId, purposeId]
   );
-
-  if (!row) {
-    // нет записи — создаём новую
-    const [{ insertId }] = await pool.query(
-      `INSERT INTO journal
-         (user_id, purpose_id, current_day, date_started, is_over)
-       VALUES (?, ?, 1, NOW(), 0)`,
-      [userId, purposeId]
-    );
-    return { journalId: insertId, userId, purposeId, currentDay: 1 };
+  if (active) {
+    // возвращаем ту же запись
+    return { journalId: active.id, userId, purposeId, currentDay: null };
   }
-
-  if (row.is_over === 0) {
-    // курс уже в процессе — продолжаем
-    return { journalId: row.id, userId, purposeId, currentDay: null };
-  }
-
-  // курс завершён — сбрасываем запись для повторного старта
-  await pool.query(
-    `UPDATE journal
-        SET current_day  = 1,
-            is_over      = 0,
-            date_started = NOW(),
-            end_date     = NULL
-      WHERE id = ?`,
-    [row.id]
+  // создаём новую запись
+  const [{ insertId }] = await pool.query(
+    `INSERT INTO journal 
+       (user_id, purpose_id, current_day, date_started, is_over)
+     VALUES (?, ?, 1, NOW(), 0)`,
+    [userId, purposeId]
   );
-  return { journalId: row.id, userId, purposeId, currentDay: 1 };
+  return { journalId: insertId, userId, purposeId, currentDay: 1 };
 }
 
 /**
- * Явный сброс курса (кнопка «Начать сначала»)
+ * POST /courses/reset
+ * Завершает существующую попытку и создаёт новую.
  */
 async function resetCourse(userId, purposeId) {
-  const [res] = await pool.query(
-    `UPDATE journal
-        SET current_day  = 1,
-            is_over      = 0,
-            date_started = NOW(),
-            end_date     = NULL
-      WHERE user_id = ? AND purpose_id = ?`,
+  // помечаем старую попытку завершённой
+  await pool.query(
+    `UPDATE journal 
+        SET is_over=1, end_date=NOW()
+      WHERE user_id=? AND purpose_id=? AND is_over=0`,
     [userId, purposeId]
   );
-  if (res.affectedRows === 0) {
-    const err = new Error('Нельзя сбросить несуществующий курс');
-    err.statusCode = 400;
-    throw err;
-  }
-  return { success: true };
+  // создаём новую
+  const [{ insertId }] = await pool.query(
+    `INSERT INTO journal 
+       (user_id, purpose_id, current_day, date_started, is_over)
+     VALUES (?, ?, 1, NOW(), 0)`,
+    [userId, purposeId]
+  );
+  return { journalId: insertId, currentDay: 1 };
 }
 
 /**
- * Отметить текущий день выполненным:
- * увеличиваем current_day, проверяем окончание, выставляем end_date
+ * Завершить текущий день: ++current_day, проверить конец курса
  */
 async function markDayComplete(userId, journalId) {
-  const [result] = await pool.query(
-    `UPDATE journal j
+  // 1) Получаем из journal текущий день и из purpose — общее число дней
+  const [[rec]] = await pool.query(
+    `SELECT j.current_day, p.count_day
+       FROM journal j
        JOIN purpose p ON p.id = j.purpose_id
-        SET j.current_day = j.current_day + 1,
-            j.is_over     = IF(j.current_day + 1 > p.count_day, 1, 0),
-            j.end_date    = IF(j.current_day + 1 > p.count_day, NOW(), j.end_date)
-     WHERE j.id = ? AND j.user_id = ?`,
+      WHERE j.id = ? AND j.user_id = ?`,
     [journalId, userId]
   );
-  if (result.affectedRows === 0) {
-    const err = new Error('Не удалось отметить день выполненным');
-    err.statusCode = 400;
-    throw err;
+  if (!rec) {
+    const e = new Error('Попытка не найдена');
+    e.statusCode = 404;
+    throw e;
   }
-  return { success: true };
+  if (rec.current_day >= rec.count_day) {
+    const e = new Error('Все дни уже пройдены');
+    e.statusCode = 400;
+    throw e;
+  }
+  // 2) Вычисляем новый день
+  const nextDay = rec.current_day + 1;
+  // 3) Обновляем запись: увеличиваем день, флаг is_over и end_date по необходимости
+  await pool.query(
+    `UPDATE journal j
+       JOIN purpose p ON p.id = j.purpose_id
+      SET
+        j.current_day = ?,
+        j.is_over     = IF(? >= p.count_day, 1, 0),
+        j.end_date    = IF(? >= p.count_day, NOW(), j.end_date)
+      WHERE j.id = ? AND j.user_id = ?`,
+    [nextDay, nextDay, nextDay, journalId, userId]
+  );
+  return { currentDay: nextDay };
 }
 
 /**
- * Прогресс пользователя: возвращаем массив записей journal + данные из purpose
+ * GET /courses/progress
+ * Сортировка свежих попыток первыми
  */
 async function getProgress(userId) {
   const [rows] = await pool.query(
     `SELECT
-       j.id           AS journalId,
-       p.id           AS purposeId,
-       p.name         AS name,
-       j.current_day  AS currentDay,
-       p.count_day    AS totalDays,
-       j.is_over      AS isOver,
+       j.id AS journalId,
+       p.id AS purposeId,
+       p.name,
+       j.current_day AS currentDay,
+       p.count_day AS totalDays,
+       j.is_over AS isOver,
        j.date_started AS dateStarted,
-       j.end_date     AS dateEnded
-     FROM journal j
-     JOIN purpose p ON p.id = j.purpose_id
-    WHERE j.user_id = ?`,
+       j.end_date AS dateEnded
+     FROM journal j JOIN purpose p ON p.id=j.purpose_id
+    WHERE j.user_id=?
+    ORDER BY j.date_started DESC`,
     [userId]
   );
   return rows;

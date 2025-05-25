@@ -1,3 +1,4 @@
+// src/components/lose-weight/LoseWeightDaySelectionPage.js
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -9,41 +10,42 @@ export default function LoseWeightDaySelectionPage() {
   const purposeId = 2;
   const [currentDay, setCurrentDay] = useState(1);
   const [isOver, setIsOver]         = useState(false);
+  const [journalId, setJournalId]   = useState(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState('');
 
   useEffect(() => {
-    async function fetchProgress() {
+    (async () => {
       try {
         const { progress } = await getJSON('/api/courses/progress');
         const rec = progress.find(r => r.purposeId === purposeId);
         if (!rec) throw new Error('Прогресс не найден');
         setCurrentDay(rec.currentDay);
         setIsOver(Boolean(rec.isOver));
+        setJournalId(rec.journalId);
       } catch (e) {
         setError(e.message);
       } finally {
         setLoading(false);
       }
-    }
-    fetchProgress();
+    })();
   }, []);
 
   const handleDaySelect = (day) => {
-    if (!isOver && day <= currentDay) {
-      navigate(`/lose-weight-training/days/${day}`);
+    if (day <= currentDay) {
+      navigate(`/lose-weight-training/days/${day}`, { state: { journalId } });
     }
   };
 
-  const handleResetCourse = async () => {
+  const handleReset = async () => {
     try {
-      await postJSON('/api/courses/reset', { purposeId });
+      await postJSON('/api/courses/start', { purposeId });
       setLoading(true);
-      setError('');
       const { progress } = await getJSON('/api/courses/progress');
       const rec = progress.find(r => r.purposeId === purposeId);
       setCurrentDay(rec.currentDay);
       setIsOver(Boolean(rec.isOver));
+      setJournalId(rec.journalId);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -55,9 +57,9 @@ export default function LoseWeightDaySelectionPage() {
   if (error)   return <Typography color="error">{error}</Typography>;
 
   return (
-    <Paper sx={{ p: 3, mt: 2 }}>
+    <Paper sx={{ p:3, mt:2 }}>
       <Typography variant="h5" textAlign="center" gutterBottom>
-        Курс похудения — выберите день
+        Выберите день похудения (текущий: {currentDay})
       </Typography>
       <Box
         sx={{
@@ -69,10 +71,8 @@ export default function LoseWeightDaySelectionPage() {
       >
         {Array.from({ length: totalDays }, (_, i) => {
           const day = i + 1;
-          const disabled = isOver || day > currentDay;
-          let color = 'inherit';
-          if (day < currentDay) color = 'success';
-          else if (day === currentDay) color = 'primary';
+          const disabled = day > currentDay;
+          let color = day < currentDay ? 'success' : (day === currentDay ? 'primary' : 'inherit');
           return (
             <Button
               key={day}
@@ -86,10 +86,9 @@ export default function LoseWeightDaySelectionPage() {
           );
         })}
       </Box>
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Button onClick={handleResetCourse}>
-          {isOver ? 'Повторить курс' : 'Начать сначала'}
-        </Button>
+
+      <Box textAlign="center" sx={{ mt:2 }}>
+        <Button onClick={handleReset}>Начать сначала</Button>
       </Box>
     </Paper>
   );

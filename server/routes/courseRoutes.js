@@ -29,9 +29,9 @@ router.post(
 
 // POST /api/courses/reset
 // перезапуск курса.
-router.post ('/reset',
-  permit('parent','child'), 
-  ctl.resetCourse);
+// router.post ('/reset',
+//   permit('parent','child'), 
+//   ctl.resetCourse);
 
 /**
  * POST /api/courses/complete
