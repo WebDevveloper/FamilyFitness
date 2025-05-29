@@ -5,20 +5,24 @@ import {
   Typography,
   Paper,
   Box,
-  Alert
+  Alert,
+  RadioGroup,
+  FormControlLabel,
+  Radio
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { postJSON } from '../../api';
 
 export default function RegistrationForm() {
   const navigate = useNavigate();
-  const [username, setUsername]           = useState('');
-  const [password, setPassword]           = useState('');
+  const [username, setUsername]         = useState('');
+  const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isSubmitting, setIsSubmitting]   = useState(false);
-  const [errorMessage, setErrorMessage]   = useState('');
+  const [role, setRole]                 = useState('parent');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async event => {
     event.preventDefault();
     if (password !== confirmPassword) {
       setErrorMessage('Пароли не совпадают!');
@@ -28,14 +32,15 @@ export default function RegistrationForm() {
     setIsSubmitting(true);
 
     try {
-      // отправляем запрос на POST /api/auth/register
+      // теперь отправляем и роль
       const data = await postJSON('/api/auth/register', {
         name:     username,
-        password
+        password,
+        role
       });
 
       console.log('Успешная регистрация:', data);
-      navigate('/'); // перенаправляем на главную
+      navigate('/signup'); // перенаправляем на страницу входа
     } catch (err) {
       setErrorMessage(err.message || 'Ошибка при регистрации');
     } finally {
@@ -93,6 +98,20 @@ export default function RegistrationForm() {
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
           />
+
+          {/* выбор роли */}
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            Роль
+          </Typography>
+          <RadioGroup
+            row
+            value={role}
+            onChange={e => setRole(e.target.value)}
+          >
+            <FormControlLabel value="parent" control={<Radio />} label="Родитель" />
+            <FormControlLabel value="child"  control={<Radio />} label="Ребёнок"   />
+          </RadioGroup>
+
           <Box mt={2} mb={2}>
             <Typography variant="body2">
               Уже есть аккаунт?{' '}

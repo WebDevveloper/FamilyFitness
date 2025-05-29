@@ -23,7 +23,7 @@ export default function ProfilePage() {
     (async () => {
       try {
         // 1) Получаем профиль
-        const u = await getJSON('/api/profile');
+        const u = await getJSON('/api/profile/me');
         setUser(u);
 
         // 2) Получаем прогресс

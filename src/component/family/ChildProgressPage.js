@@ -1,15 +1,16 @@
-// src/components/family/ChildProgressPage.js
+// src/component/family/ChildProgressPage.js
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import {
   Box,
+  Avatar,
   Typography,
   Paper,
   Table,
   TableHead,
+  TableBody,
   TableRow,
   TableCell,
-  TableBody,
   CircularProgress,
   Alert
 } from '@mui/material';
@@ -17,32 +18,35 @@ import { getJSON } from '../../api';
 
 export default function ChildProgressPage() {
   const { childId } = useParams();
-  const [progress, setProgress] = useState([]);
-  const [childName, setChildName] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [childInfo, setChildInfo]     = useState(null);
+  const [progress, setProgress]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
 
   useEffect(() => {
-    async function fetchProgress() {
+    (async () => {
       try {
-        // 1) Загружаем имя ребёнка (если доступно)
-        const { name } = await getJSON(`/api/family/${childId}/info`);
-        setChildName(name);
-        // 2) Загружаем прогресс
-        const { progress } = await getJSON(`/api/family/${childId}/progress`);
-        setProgress(progress);
+        const infoResp = await getJSON(`/api/family/${childId}/info`);
+        setChildInfo(infoResp);
+
+        const progResp = await getJSON(`/api/family/${childId}/progress`);
+        setProgress(progResp.progress);
       } catch (e) {
         setError(e.message);
       } finally {
         setLoading(false);
       }
-    }
-    fetchProgress();
+    })();
   }, [childId]);
+
+  // если не родитель, редиректим
+  if (error.includes('Доступ запрещён')) {
+    return <Navigate to="/" replace />;
+  }
 
   if (loading) {
     return (
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
+      <Box sx={{ textAlign: 'center', mt: 6 }}>
         <CircularProgress />
       </Box>
     );
@@ -57,20 +61,26 @@ export default function ChildProgressPage() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Прогресс ребёнка {childName}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <Avatar
+          src={childInfo.avatar}
+          sx={{ width: 64, height: 64, mr: 2 }}
+        />
+        <Typography variant="h4">
+          Прогресс ребёнка: {childInfo.name}
+        </Typography>
+      </Box>
 
       <Paper sx={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Курс</TableCell>
-              <TableCell align="right">Текущий день</TableCell>
+              <TableCell align="right">День</TableCell>
               <TableCell align="right">Всего дней</TableCell>
               <TableCell align="right">Прогресс</TableCell>
-              <TableCell>Начало</TableCell>
-              <TableCell>Окончание</TableCell>
+              <TableCell>Начат</TableCell>
+              <TableCell>Завершён</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

@@ -1,189 +1,107 @@
-import React, {useState, useEffect} from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
-
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  AppBar, Box, Toolbar, IconButton,
+  Typography, Menu, MenuItem, Button,
+  Tooltip, Avatar, Container
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 
-import {jwtDecode} from "jwt-decode";
+import { AuthContext } from '../../contexts/AuthContext';
 
-import logo from './img/blue-and-green-letter-F.jpg';
-
-const pages = [
-  { label: 'О нас', path: '/about' },
-  { label: 'Программы', path: '/programs' },
-  { label: 'Семья', path: '/family' },
-  { label: 'Календарь', path: '/calendar' },
-  { label: 'Статистика', path: '/progress' }
-];
-
-const settings = [
-  { label: 'Профиль', path: '/profile' },
-  { label: 'Семья', path: '/family' },
-  { label: 'Войти', path: '/signup' },
-  { label: 'Выйти', action: 'logout' },
-];
-
-function ResponsiveAppBar() {
-  const [anchorElNav, setAnchorElNav] = useState(null);
-  const [anchorElUser, setAnchorElUser] = useState(null);
-
-  const [userName, setUserName] = useState("");
-
+export default function ResponsiveAppBar() {
+  const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
+  const [anchorNav, setAnchorNav] = useState(null);
+  const [anchorUser, setAnchorUser] = useState(null);
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
+  const pages = [
+    { label: 'О нас',        path: '/about' },
+    ...(user?.role === 'parent' ? [{ label: 'Семья', path: '/family' }] : []),
+    { label: 'Курсы',        path: '/programs' },
+    { label: 'Календарь',    path: '/calendar' },
+    ...(user?.role === 'child' ? [{ label: 'Мой прогресс', path: '/progress' }] : []),
+    ...(user?.role === 'admin' ? [{ label: 'Админка', path: '/admin/courses' }] : []),
+  ];
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
+  const settings = user
+    ? [
+        { label: 'Профиль', action: () => navigate('/profile') },
+        { label: 'Выйти',   action: () => {
+            localStorage.removeItem('accessToken');
+            setUser(null);
+            navigate('/');
+          }
+        }
+      ]
+    : [
+        { label: 'Войти',       action: () => navigate('/signup') },
+        { label: 'Регистрация', action: () => navigate('/registration') }
+      ];
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
-  const handleNavigate = (path) => {
-    navigate(path);
-    handleCloseNavMenu();
-    handleCloseUserMenu();
-  };
-
-  
-  // ФУНКЦИЯ ВЫХОДА ИЗ АККАУНТА
-  const handleUserMenuClick = (setting) => {
-    if (setting.action === 'logout') {
-      // Очистка токена из localStorage
-      localStorage.removeItem('accessToken');
-      setUserName(''); // Убираем имя пользователя из состояния
-      console.log('Выход из аккаунта выполнен');
-    } else {
-      handleNavigate(setting.path); // Переход по другим пунктам меню
-    }
-  };
-  
-
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUserName(decoded.name); // Устанавливаем имя в state
-        console.log(`Привет, ${decoded.name}!`);
-      } catch (error) {
-        console.error("Ошибка при декодировании токена:", error.message);
-      }
-    }
-  }, []);
-
-  const firstLetter = userName ? userName.charAt(0).toUpperCase() : "?"; // Первая буква имени
-
-  console.log(`Привет, ${userName}!`);
+  const firstLetter = user?.name?.[0]?.toUpperCase() || '?';
 
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* Кликабельный логотип с изображением */}
+          {/* Логотип из public/img/ */}
           <Box
             component="img"
-            src={logo} // Путь к изображению
+            src="/img/blue-and-green-letter-F.jpg"
             alt="Logo"
-            onClick={() => navigate('/')} // Переход на главную страницу
-            sx={{
-              cursor: 'pointer',
-              height: 40,
-              width: 40,
-              marginRight: 2,
-              display: { xs: 'none', md: 'block' },
-            }}
+            onClick={() => navigate('/')}
+            sx={{ cursor: 'pointer', height: 40, mr: 2 }}
           />
 
+          {/* мобильное меню */}
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
+            <IconButton onClick={e => setAnchorNav(e.currentTarget)} color="inherit">
               <MenuIcon />
             </IconButton>
             <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{ display: { xs: 'block', md: 'none' } }}
+              anchorEl={anchorNav}
+              open={Boolean(anchorNav)}
+              onClose={() => setAnchorNav(null)}
             >
-              {pages.map((page) => (
-                <MenuItem key={page.label} onClick={() => handleNavigate(page.path)}>
-                  <Typography textAlign="center">{page.label}</Typography>
+              {pages.map(p => (
+                <MenuItem key={p.path} onClick={() => { navigate(p.path); setAnchorNav(null); }}>
+                  <Typography>{p.label}</Typography>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
 
+          {/* десктопное меню */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
+            {pages.map(p => (
               <Button
-                key={page.label}
-                onClick={() => handleNavigate(page.path)}
-                sx={{ my: 2, color: 'white', display: 'block' }}
+                key={p.path}
+                onClick={() => navigate(p.path)}
+                sx={{ color: 'white' }}
               >
-                {page.label}
+                {p.label}
               </Button>
             ))}
           </Box>
+
+          {/* меню пользователя */}
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title={userName}>
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Avatar">{firstLetter}</Avatar>
+            <Tooltip title={user?.name || 'Гость'}>
+              <IconButton onClick={e => setAnchorUser(e.currentTarget)} sx={{ p: 0 }}>
+                <Avatar>{firstLetter}</Avatar>
               </IconButton>
             </Tooltip>
             <Menu
+              anchorEl={anchorUser}
+              open={Boolean(anchorUser)}
+              onClose={() => setAnchorUser(null)}
               sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting.label} onClick={() => handleUserMenuClick(setting)}>
-                  <Typography textAlign="center">{setting.label}</Typography>
+              {settings.map(s => (
+                <MenuItem key={s.label} onClick={() => { s.action(); setAnchorUser(null); }}>
+                  <Typography>{s.label}</Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -193,5 +111,3 @@ function ResponsiveAppBar() {
     </AppBar>
   );
 }
-
-export default ResponsiveAppBar;

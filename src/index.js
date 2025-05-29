@@ -6,15 +6,21 @@ import reportWebVitals from './reportWebVitals';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './theme';
 
+// наш контекст аутентификации
+import { AuthProvider } from './contexts/AuthContext';
+// браузерный роутер
+import { BrowserRouter } from 'react-router-dom';
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <ThemeProvider theme={theme}>
-    <CssBaseline />
-    <App />
-  </ThemeProvider>
+   <CssBaseline />
+   <AuthProvider>
+     <BrowserRouter>
+       <App />
+     </BrowserRouter>
+   </AuthProvider>
+ </ThemeProvider>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
