@@ -1,23 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
 import { getJSON, postJSON } from '../../../api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
-export default function CardioDaySelectionPage() {
+export default function UltimateDaySelectionPage({ purposeId: propPurposeId }) {
   const navigate = useNavigate();
   const theme = useTheme();
-  // для мелких экранов можно уменьшить размер кнопок
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // если передан через URL параметр — возьмём его
+  const { purposeId: paramPurposeId } = useParams();
+  const purposeId = +propPurposeId || +paramPurposeId;
+
   const totalDays = 30;
-  const purposeId = 3;
 
   const [currentDay, setCurrentDay] = useState(0);
   const [isOver, setIsOver] = useState(false);
   const [journalId, setJournalId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Забираем прогресс и ID активной попытки
   useEffect(() => {
     (async () => {
       try {
@@ -34,30 +42,32 @@ export default function CardioDaySelectionPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [purposeId]);
 
-  // выбор дня
   const handleDay = day => {
     if (day <= currentDay) {
-      navigate(`/cardio-training/days/${day}`, { state: { journalId } });
+      navigate(`/${purposeId === 1 ? 'strength-training' : purposeId === 2 ? 'lose-weight-training' : 'cardio-training'}/days/${day}`, {
+        state: { journalId },
+      });
     }
   };
 
-  // кнопка «Начать сначала» доступна только если курс полностью пройден
   const handleReset = async () => {
     if (!isOver) return;
     await postJSON('/api/courses/reset', { purposeId });
     window.location.reload();
   };
 
-  if (loading) return <Typography>Загрузка...</Typography>;
+  if (loading) {
+    return <Typography>Загрузка...</Typography>;
+  }
 
   return (
     <Paper
       sx={{
         p: 3,
         mt: 2,
-        minHeight: '70vh',               // чуть больше, чтобы «заполнить» экран
+        minHeight: '70vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -73,7 +83,6 @@ export default function CardioDaySelectionPage() {
           gap: 2,
           width: '100%',
           maxWidth: 900,
-          // Для больших экранов 80px, для маленьких — 64px
           gridTemplateColumns: `repeat(auto-fit, minmax(${isXs ? 64 : 80}px, 1fr))`,
           py: 4,
         }}

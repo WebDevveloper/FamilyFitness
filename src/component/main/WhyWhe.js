@@ -15,7 +15,7 @@ export default function WhyWe() {
             component="img"
             image={aboutUsImage}
             alt='eblan'
-            sx={{ width: '100%', height: 'auto' }} // Устанавливаем ширину и высоту
+            sx={{ width: '100%', height: 'auto' }} 
           />
         </Grid>
         <Grid item xs={12} sm={6} md={6} flexDirection={'column'}>

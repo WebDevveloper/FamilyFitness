@@ -10,13 +10,25 @@
 
 /* Стили для главного изображения */
 #main-img {
-  width: 100%;       /* Ширина контейнера */
-  height: 800px;     /* Высота контейнера */
-  overflow: hidden;  /* Скрывает выходящее за пределы изображение */
+  width: 100%;
+  aspect-ratio: 16/9;          
+  overflow: hidden;
+  margin-bottom: 2rem;
 }
 
 #main-img img {
-  width: 100%;       /* Изображение заполняет контейнер по ширине */
-  height: 100%;      /* Изображение заполняет контейнер по высоте */
-  object-fit: cover; /* Изображение обрезается, чтобы заполнить контейнер */
+  width: 100%;       
+  height: 100%;      
+  object-fit: cover; 
+}
+
+@media(max-width: 768px) {
+  #main-img {
+    aspect-ratio: 4/3;
+  }
+}
+@media(max-width: 480px) {
+  #main-img {
+    aspect-ratio: 3/2;
+  }
 }

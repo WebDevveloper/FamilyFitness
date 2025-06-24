@@ -1,45 +1,55 @@
 import { getJSON, postJSON, putJSON, deleteJSON } from '../api';
 
 /** COURSES */
+
+// получить список всех курсов (для админа)
 export function fetchCourses() {
-  // GET /api/admin/courses → { courses }
   return getJSON('/api/admin/courses');
 }
+
+// создать новый курс
 export function createCourse(data) {
-  // POST /api/admin/courses
   return postJSON('/api/admin/courses', data);
 }
+
+// обновить курс по ID
 export function updateCourse(id, data) {
-  // PUT /api/admin/courses/:id
   return putJSON(`/api/admin/courses/${id}`, data);
 }
+
+// удалить курс по ID
 export function deleteCourse(id) {
-  // DELETE /api/admin/courses/:id
   return deleteJSON(`/api/admin/courses/${id}`);
 }
 
+// скрыть / опубликовать курс
+export function togglePublishCourse(id, publish) {
+  return putJSON(`/api/admin/courses/${id}/publish`, { publish });
+}
+
 /** EXERCISES (для админа) */
-// list all exercises in the system
+
+// получить все упражнения в системе
 export function fetchAllExercises() {
-  // GET /api/exercises → { exercises }
   return getJSON('/api/exercises');
 }
-// list exercises already assigned to a specific course
+
+// получить упражнения, привязанные к конкретному курсу
 export function fetchCourseExercises(courseId) {
-  // GET /api/admin/courses/:id/exercises → { exercises }
   return getJSON(`/api/admin/courses/${courseId}/exercises`);
 }
-// add one exercise (with day) to a course
-export function addExerciseToCourse(courseId, exerciseId, day = 1) {
-  // POST /api/admin/courses/:id/exercises  { exerciseId, day }
+
+// добавить упражнение к курсу
+// вторым параметром передаем объект { exerciseId, day }
+export function addExerciseToCourse(courseId, { exerciseId, day }) {
   return postJSON(`/api/admin/courses/${courseId}/exercises`, {
     exerciseId,
     day
   });
 }
-// remove by purpose_config.id
+
+// удалить упражнение из курса по configId
 export function removeExerciseFromCourse(courseId, configId) {
-  // DELETE /api/admin/courses/:id/exercises/:configId
   return deleteJSON(
     `/api/admin/courses/${courseId}/exercises/${configId}`
   );

@@ -3,23 +3,21 @@ const authenticate = require('../middleware/authenticate');
 const authorize    = require('../middleware/authorize');
 const ctl          = require('../controllers/adminController');
 
-// все админ-роуты — только для роли 'admin'
 router.use(authenticate, authorize('admin'));
 
-// CRUD для курсов
-router
-  .route('/courses')
+// Курсы
+router.route('/courses')
   .get(ctl.getCourses)
   .post(ctl.createCourse);
 
-router
-  .route('/courses/:id')
+router.route('/courses/:id')
   .put(ctl.updateCourse)
   .delete(ctl.deleteCourse);
 
-// Управление упражнениями в курсе
-router
-  .route('/courses/:id/exercises')
+router.put('/courses/:id/publish', ctl.publishCourse);
+
+// Упражнения
+router.route('/courses/:id/exercises')
   .get(ctl.getCourseExercises)
   .post(ctl.addExerciseToCourse);
 
@@ -27,5 +25,8 @@ router.delete(
   '/courses/:id/exercises/:configId',
   ctl.removeExerciseFromCourse
 );
+
+// Пользователи
+router.get('/users', ctl.listUsers);
 
 module.exports = router;

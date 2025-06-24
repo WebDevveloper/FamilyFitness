@@ -37,6 +37,11 @@ export default function AdminLayout() {
         </ListItem>
         {/* Другие пункты меню */}
         <ListItem disablePadding>
+          <ListItemButton component={RouterLink} to="/admin/users">
+            <ListItemText primary="Пользователи" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
           <ListItemButton component={RouterLink} to="/">
             <ListItemText primary="В приложение" />
           </ListItemButton>

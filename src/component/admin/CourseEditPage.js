@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -18,13 +19,15 @@ import {
   removeExerciseFromCourse
 } from '../../api/admin';
 
-export default function CourseEditPage({ courseId }) {
+export default function CourseEditPage() {
+  const { id: courseId } = useParams();           // берём ID из URL
   const [allExs,    setAllExs]    = useState([]);
   const [courseExs, setCourseExs] = useState([]);
   const [selectedEx,   setSelectedEx]   = useState('');
   const [selectedDay,  setSelectedDay]  = useState(1);
 
   useEffect(() => {
+    if (!courseId) return;
     loadAll();
     loadCourse();
   }, [courseId]);
@@ -42,10 +45,11 @@ export default function CourseEditPage({ courseId }) {
   async function handleAdd() {
     if (!selectedEx || !selectedDay) return;
     await addExerciseToCourse(courseId, {
-      exerciseId: selectedEx,
-      day: selectedDay
+        exerciseId: selectedEx,
+        day:          selectedDay
     });
     setSelectedEx('');
+    setSelectedDay(1);
     loadCourse();
   }
 
@@ -57,7 +61,7 @@ export default function CourseEditPage({ courseId }) {
   return (
     <Box p={3}>
       <Typography variant="h5" mb={2}>
-        Управление упражнениями курса #{courseId}
+        Управление упражнениями курса №{courseId}
       </Typography>
 
       <Paper sx={{ p:2, mb:3 }}>
@@ -69,9 +73,13 @@ export default function CourseEditPage({ courseId }) {
               onChange={e => setSelectedEx(e.target.value)}
               displayEmpty
             >
-              <MenuItem value="" disabled>Выберите упражнение</MenuItem>
+              <MenuItem value="" disabled>
+                Выберите упражнение
+              </MenuItem>
               {allExs.map(ex => (
-                <MenuItem key={ex.id} value={ex.id}>{ex.name}</MenuItem>
+                <MenuItem key={ex.id} value={ex.id}>
+                  {ex.name}
+                </MenuItem>
               ))}
             </Select>
           </Grid>
@@ -86,7 +94,7 @@ export default function CourseEditPage({ courseId }) {
             />
           </Grid>
           <Grid item xs={4}>
-            <Button variant="contained" onClick={handleAdd}>
+            <Button variant="contained" onClick={handleAdd} disabled={!selectedEx}>
               Добавить
             </Button>
           </Grid>
@@ -107,12 +115,19 @@ export default function CourseEditPage({ courseId }) {
             py={1}
             borderBottom="1px solid #ddd"
           >
-            <Typography>День {ex.day}: {ex.name}</Typography>
+            <Typography>
+              День {ex.day}: {ex.name}
+            </Typography>
             <IconButton onClick={() => handleRemove(ex.configId)}>
               <Delete />
             </IconButton>
           </Box>
         ))}
+        {courseExs.length === 0 && (
+          <Box p={2}>
+            <Typography color="text.secondary">Упражнения ещё не добавлены.</Typography>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

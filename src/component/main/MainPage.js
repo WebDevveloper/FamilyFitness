@@ -6,7 +6,7 @@ import WhyWe from "./WhyWhe";
 import Footer from "../universal/Footer";
 import "./styles/main-page.css";
 
-import firstBlackImage from './img/first-black.jpg'; // Импорт изображения
+import firstBlackImage from './img/Семейное фото 2.jpeg'; // Импорт изображения
 
 export default function MainPage() {
   return (
