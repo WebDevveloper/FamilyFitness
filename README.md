@@ -1,70 +1,46 @@
-# Getting Started with Create React App
+# О приложении
+Приложение "Семейный Фитнес-тренер" - это дипломная работа/информационная система для домашнего фитнеса. 
+Оно жизнеспособно и его функции работают, однако оно находится в разработке. Решил не оставлять его в текущем состоянии.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Технологии
+1. Стандартный набор HTML, CSS, JS
+2. React
+3. MUI component
+4. MySQL Workbench
+5. Express.js
 
-## Available Scripts
+# Причины выбора технологий
+Данные технологии позволяют быстро развернуть полноценное web-приложение и не тратить особо времени на дизайн или подготовку сервера и прочее.
+Современные, востребованные технологии, которые облегчают разработку.
+Стоит отметить систему модульности React, которая позволяет быстро отслеживать ошибки и вводить/выводить файлы и делать компоненты многоразовыми.
 
-In the project directory, you can run:
+# Возможности
+Программа позволяет регистрировать аккаунт родителя и ребенка, и выполнять упражнения. 
+Сами упражнения выполнены в текстовом формате и разделены на 3 категории (сила, похудение, кардио).
+Пользователь может выполнять упражнения только после регистрации.
+В профиле идет отслеживания категории (курсы) упражнения и переходить прямо к ним.
+Также, родитель по ID в профиле ребенка, может добавить его в свою "семейную таблицу" и отслеживать его прогресс.
+В приложении реализована система администратора и разделение ролей как "родитель-ребенок", так и "администратор/пользователь".
+
+# Запуск
+
+Этот проект был собран на React [Create React App](https://github.com/facebook/create-react-app).
+
+## Доступные скрипты
+
+Можно исполльзовать:
 
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Запуск в режиме разработчика.\
+Открыть [http://localhost:3000](http://localhost:3000) в браузере чтобы увидеть.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Тестовый забег в интерактивном моде
+Подробности [running tests](https://facebook.github.io/create-react-app/docs/running-tests)
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Сборка приложения в соответствующую папку.\
+Подробнее [deployment](https://facebook.github.io/create-react-app/docs/deployment).
