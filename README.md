@@ -1,70 +1,106 @@
-# Getting Started with Create React App
+## Family Fitness Trainer — семейное фитнес-приложение (React + Express + MySQL)
+**Кратко (30 сек):** веб-приложение с ролями родитель/ребёнок/админ, каталогом упражнений и 30-дневными программами по целям (Сила / Похудение / Кардио). Есть семейные связи «родитель → ребёнок» и журнал прохождения по дням и **панель администратора**. Клиент на CRA, сервер на Express, БД — MySQL.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Origin & статус.** Проект начат как дипломная работа под дедлайн. Сейчас идёт доводка под более высокие стандарты: единый контракт API, миграции БД, безопасность (bcrypt/JWT/.env), базовые тесты и CI. В БД встречаются как старые SHA-256, так и корректные bcrypt-хэши — см. «Безопасность» и «Миграции».
 
-## Available Scripts
+## Демо / скриншоты
+- Деплой: _добавь ссылку (Netlify)_
+- Скриншоты: `./docs/screenshots/`
 
-In the project directory, you can run:
+## Стек
+- **Frontend:** React 18 (CRA `react-scripts`), React Router, MUI
+- **Backend:** Node.js, Express, CORS, body-parser, dotenv, jsonwebtoken
+- **База Данных:** MySQL (mysql2)
+- **Авторизация:** JWT (Bearer / httpOnly cookie)
 
-### `npm start`
+## Фичи (то, что есть сейчас)
+- Регистрация/вход; роли: parent, child, admin
+- Связь семьи: **родитель** → **ребёнок**, просмотр прогресса ребёнка
+- Цели/программы: 30-дневные планы (Сила/Похудение/Кардио)
+- Журнал прохождения по дням (start/continue/finish)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Архитектура БД (кратко)
+```
+exercise(id, name, about, how_to_do, lose_weight, strength, cardio, is_family)   -- каталог упражнений
+purpose(id, name, count_day, calories)                                           -- цели/программы (30 дней)
+purpose_config(id, purpose_id, exercise_id, day)                                 -- сетка упражнений на каждый день
+users(id, name, password, last_name_update, avatar, role enum('parent','child','admin'))
+family_members(parent_id, child_id)                                              -- связь "родитель → ребёнок"
+journal(id, purpose_id, user_id, is_over, current_day, date_started, end_date)   -- прогресс пользователя
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```
+## Связи
+- purpose_config.purpose_id → purpose.id (1:M)
+- purpose_config.exercise_id → exercise.id (1:M)
+- family_members.parent_id → users.id (M:1, role=parent)
+- family_members.child_id → users.id (M:1, role=child)
+- journal.user_id → users.id (M:1), journal.purpose_id → purpose.id (M:1)
 
-### `npm test`
+## Переменные окружения
+Используется секретный ключ для хеширования пароля:
+```bash
+# client/.env
+REACT_APP_API_BASE=http://localhost:5000
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# server/.env
+PORT=5000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=...
+DB_PASSWORD=...
+DB_NAME=fitnes
+JWT_SECRET=super_secret
+BCRYPT_ROUNDS=12
+CORS_ORIGIN=http://localhost:3000
 
-### `npm run build`
+```
+## Метрики (цели для мобильных)
+- Lighthouse: **90–100**
+- Web Vitals: **LCP < 2.0 s**, **CLS ~ 0.01**
+- Bundle: **≤ 300 KB**
+> Скриншоты с Lighthouse положи в `./docs/screenshots/`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Безопасность
+- **Пароли:** перейти полностью на bcrypt (12 rounds). Тактика: «ленивая миграция» — при первом логине пользователя со старым SHA-256 перехэшировать bcrypt и сохранить; запретить новые SHA-варианты.
+- **JWT:** хранение в httpOnly cookie (или Bearer), добавить refresh-пару и ротацию.
+- **Роли:** middleware уровня маршрутов: requireAuth, requireRole("parent").
+- **Конфиги:** все ключи/доступы — только через .env.
+- **Rate limits:** защитить /auth/* и /journal/*.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Текущие нюансы
+- Смешанные схемы хеширования (SHA-256 и bcrypt) → миграция в процессе
+- Нет формальных миграций/сидов, часть скриптов ad-hoc
+- Нет мониторинга ошибок (Sentry/аналог), нет rate-limits
+- Отсутствует публичный деплой (front+API+DB)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Roadmap
+- [ ] Bcrypt-only, httpOnly JWT, refresh-поток, RBAC middleware
+- [ ] Миграции/сиды + индексы; docs/API.md и ER-схема (docs/db.png)
+- [ ] Документация: ```docs/API.md```, ER-диаграмма (```docs/db.png```)
+- [ ] e2e (Playwright) + unit; GitHub Actions (lint/test/build)
+- [ ] Улучшение панели администратора
+- [ ] Возможность изменять профиль пользователя (аватар/смена пароля/история)
+- [ ] Новые графики для лучшего отображения прогресса
+- [ ] Улучшение дизайна
+- [ ] Деплой: фронт/бэкенд/БД; Lighthouse/Web Vitals скрины
 
-### `npm run eject`
+## Цель проекта
+Показать end-to-end разработку: роли и авторизация (включая админ-панель) → доменная модель (цели/упражнения/журнал) → UI прогресса → стабильный API и БД → метрики качества и деплой.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Запуск
+```bash
+# 1) База данных
+#   - Поднимите MySQL 8
+#   - Импортируйте дамп: family-fitnes.24.06.25.sql
+#   - Убедитесь, что создана БД "fitnes"
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# 2) Сервер (Express)
+cd server
+npm i
+node index.js                 # http://localhost:5000
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# 3) Клиент (CRA)
+cd client                     # если клиент в корне – пропустите cd
+npm i
+npm start                     # http://localhost:3000 (CRA с proxy на 5000)
+```
