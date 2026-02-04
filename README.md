@@ -47,7 +47,7 @@ journal(id, purpose_id, user_id, is_over, current_day, date_started, end_date)  
 - journal.user_id → users.id (M:1), journal.purpose_id → purpose.id (M:1)
 
 ## Переменные окружения
-Используется секретный ключ для хеширования пароля:
+JWT secret для подписи токенов; параметры bcrypt в .env:
 ```bash
 # client/.env
 REACT_APP_API_BASE=http://localhost:5000
@@ -59,7 +59,7 @@ DB_PORT=3306
 DB_USER=...
 DB_PASSWORD=...
 DB_NAME=fitnes
-JWT_SECRET=super_secret
+JWT_SECRET=your_secret
 BCRYPT_ROUNDS=12
 CORS_ORIGIN=http://localhost:3000
 
