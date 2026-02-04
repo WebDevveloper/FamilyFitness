@@ -17,14 +17,6 @@
 - **Домены/связи:** программы → упражнения → день; семья parent→child; журнал прогресса
 - **Админ-часть:** управление сущностями (база для будущего CRUD/панели)
 
-## Quick start
-```bash
-# 1) MySQL 8: создать БД "fitnes" и импортировать дамп (см. README ниже)
-# 2) Backend
-cd server && npm i && node index.js
-# 3) Frontend
-cd ../client && npm i && npm start
-
 ## Стек
 - **Frontend:** React 18 (CRA `react-scripts`), React Router, MUI
 - **Backend:** Node.js, Express, CORS, body-parser, dotenv, jsonwebtoken
